@@ -1,0 +1,6 @@
+*.pyc
+
+build/
+dist/
+test/
+daSC2.egg-info/
