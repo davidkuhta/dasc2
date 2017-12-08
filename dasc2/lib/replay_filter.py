@@ -8,12 +8,13 @@ from mpyq import MPQArchive
 
 class SC2ReplayFilter(object):
     
-    def __init__(self, mmr=1000, apm=10, races=['Zerg','Terr','Prot'], gameMap=None, dataBuild=None):
+    def __init__(self, mmr=1000, apm=10, races=['Zerg','Terr','Prot'], gameMap=None, dataBuild=None, fullPath=False):
         self.mmr_threshold = mmr
         self.apm_threshold = apm
         self.races = races
         self.map_title = gameMap
         self.game_version = int(dataBuild) if dataBuild else None
+        self.fullPath = fullPath
 
     def _info(self):
         print("\nFiltering for replays with:")
@@ -24,6 +25,7 @@ class SC2ReplayFilter(object):
         print("\tMinimum MMR of:\t"+str(self.mmr_threshold))
         print("\tMinimum APM of:\t"+str(self.apm_threshold))
         print("\tRaces:\t\t" + ', '.join(self.races))
+        print("\tUsing Full Path:"+str(self.fullPath))
         print('')
         
     def filter_replay(self, replay):
@@ -89,7 +91,10 @@ class SC2ReplayFilter(object):
 
                     if replay_metadata:
                         filtered_replay_counter += 1
-                        txt_file.write(filename+"\n")
+                        if self.fullPath:
+                            txt_file.write(replay+"\n")
+                        else:
+                            txt_file.write(filename+"\n")
                         replay_json = {str(filename.split(".")[0]):replay_metadata}
                         replay_metadata_list.append(replay_json)
 
