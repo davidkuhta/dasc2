@@ -41,14 +41,19 @@ class SC2ReplayFilter(object):
                 return None
 
         players = metadata["Players"]
+        raceFound = False
         for player in players:
             try:
-                if player['APM'] < self.apm_threshold or player['MMR'] < self.mmr_threshold or \
-                    not player['AssignedRace'] in self.races:
-                        return None
+                if player['APM'] < self.apm_threshold or player['MMR'] < self.mmr_threshold:
+                    return None
+                if player['AssignedRace'] in self.races:
+                    raceFound = True
             except KeyError:
                 return None
         
+        if not raceFound:
+            return None
+
         return metadata
 
     def filter_replays(self, directory='./'):
