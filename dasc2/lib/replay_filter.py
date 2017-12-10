@@ -7,11 +7,12 @@ import time
 from mpyq import MPQArchive
 
 class SC2ReplayFilter(object):
-    
-    def __init__(self, mmr=1000, apm=10, races=['Zerg','Terr','Prot'], gameMap=None, dataBuild=None, fullPath=False):
+
+    def __init__(self, mmr=1000, apm=10, races=['Zerg','Terr','Prot'], winning_races=['Zerg','Terr','Prot'], gameMap=None, dataBuild=None, fullPath=False):
         self.mmr_threshold = mmr
         self.apm_threshold = apm
         self.races = races
+        self.winning_races = winning_races
         self.map_title = gameMap
         self.game_version = int(dataBuild) if dataBuild else None
         self.fullPath = fullPath
@@ -27,16 +28,16 @@ class SC2ReplayFilter(object):
         print("\tRaces:\t\t" + ', '.join(self.races))
         print("\tUsing Full Path:"+str(self.fullPath))
         print('')
-        
+
     def filter_replay(self, replay):
         archive =  MPQArchive(replay).extract()
         metadata = json.loads(archive[b"replay.gamemetadata.json"].decode("utf-8"))
-        
+
         replay_game_version = int(metadata['DataBuild'])
         if self.game_version:
             if not self.game_version == replay_game_version:
                 return None
-            
+
         replay_map_title = metadata['Title']
         if self.map_title:
             if not self.map_title == replay_map_title:
@@ -48,11 +49,16 @@ class SC2ReplayFilter(object):
             try:
                 if player['APM'] < self.apm_threshold or player['MMR'] < self.mmr_threshold:
                     return None
-                if player['AssignedRace'] in self.races:
+                player_race = player['AssignedRace']
+                if player_race in self.races:
                     raceFound = True
+                if player['Result'] == 'Win':
+                    if not player_race in self.winning_races:
+                        return None
+
             except KeyError:
                 return None
-        
+
         if not raceFound:
             return None
 
@@ -99,7 +105,7 @@ class SC2ReplayFilter(object):
                         replay_metadata_list.append(replay_json)
 
             json.dump(replay_metadata_list, json_file)
-                  
+
         json_file.close()
         txt_file.close()
 
