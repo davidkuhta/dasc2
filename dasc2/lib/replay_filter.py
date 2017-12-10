@@ -8,11 +8,13 @@ from mpyq import MPQArchive
 
 class SC2ReplayFilter(object):
 
-    def __init__(self, mmr=1000, apm=10, races=['Zerg','Terr','Prot'], winning_races=['Zerg','Terr','Prot'], gameMap=None, dataBuild=None, fullPath=False):
+    def __init__(self, mmr=1000, apm=10, races=['Zerg','Terr','Prot'],
+                winningRaces=['Zerg','Terr','Prot'],
+                gameMap=None, dataBuild=None, fullPath=True):
         self.mmr_threshold = mmr
         self.apm_threshold = apm
         self.races = races
-        self.winning_races = winning_races
+        self.winning_races = winningRaces
         self.map_title = gameMap
         self.game_version = int(dataBuild) if dataBuild else None
         self.fullPath = fullPath
