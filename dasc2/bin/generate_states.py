@@ -51,6 +51,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_integer("parallel", 1, "How many instances to run in parallel.")
 flags.DEFINE_integer("step_mul", 8, "How many game steps per observation.")
 flags.DEFINE_string("replay_list", None, "Path to a directory of replays.")
+flags.DEFINE_string("states_dir", "./states", "Path to place state data")
 flags.DEFINE_integer("print_time", 100, "Interval between stat prints and data saves in seconds")
 flags.DEFINE_bool("winner_only", False, "Process Replays for both winner and loser")
 flags.mark_flag_as_required("replay_list")
@@ -237,7 +238,7 @@ class ReplayProcessor(multiprocessing.Process):
 
   def saved_replay_list(self):
     replays = []
-    for root, dirs, files in os.walk("replay_state_data/"):
+    for root, dirs, files in os.walk("states/"):
         for name in files:
             replays.append(name[0:20])
     return replays
@@ -348,7 +349,7 @@ class ReplayProcessor(multiprocessing.Process):
         return
 
     #clear datafile
-    save_file = "replay_state_data/" + replay_id[0:20] + "_" + str(player_id) + '.json'
+    save_file = "states/" + replay_id[0:20] + "_" + str(player_id) + '.json'
     with open(save_file, 'w') as outfile: pass
 
     feat = features.Features(controller.game_info())
@@ -479,6 +480,10 @@ def replay_queue_filler(replay_queue, replay_list):
 def main(unused_argv):
   """Dump stats about all the actions that are in use in a set of replays."""
   run_config = run_configs.get()
+
+
+  if not os.path.exists(FLAGS.states_dir):
+    os.makedirs(FLAGS.states_dir)
 
   if not gfile.Exists(FLAGS.replay_list):
     sys.exit("{} doesn't exist.".format(FLAGS.replay_list))

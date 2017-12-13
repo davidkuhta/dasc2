@@ -4,3 +4,4 @@ build/
 dist/
 test/
 daSC2.egg-info/
+dasc2/bin/build_orders.py
