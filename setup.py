@@ -44,6 +44,7 @@ setup(
         'dasc2',
         'dasc2.bin',
         'dasc2.lib',
+        'dasc2.ref'
     ],
     install_requires=[
         'future',
@@ -56,6 +57,7 @@ setup(
             'dasc2_extract = dasc2.bin.extract_replays:main',
             'dasc2_filter = dasc2.bin.filter_replays:main',
             'dasc2_states = dasc2.bin.generate_states:entry_point',
+            'dasc2_build_orders = dasc2.bin.build_orders:main',
         ],
     },
     extras_require=extras,

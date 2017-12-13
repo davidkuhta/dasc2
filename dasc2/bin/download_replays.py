@@ -27,7 +27,6 @@ import requests
 import json
 import argparse
 import urlparse
-import imp
 import shutil
 
 from pkg_resources import resource_filename
@@ -137,7 +136,15 @@ def get_replay_pack(client_version, client_key, client_secret, output_dir, extra
 
         # Download replay packs.
         files = []
-        for archive_url in sorted(download_urls):
+
+        sorted_urls = sorted(download_urls)
+        try:
+            from tqdm import tqdm
+            sorted_urls = tqdm(sorted_urls)
+        except ImportError:
+            pass
+
+        for archive_url in sorted_urls:
             print 'Downloading replay packs. url='  + archive_url
             files.append(download_file(archive_url, output_dir))
 
@@ -154,7 +161,7 @@ def parse_args():
                         help='Battle.net API secret', required=True)
     parser.add_argument('--version', dest='s2_client_version', action='store', type=str,
                         help='Starcraft2 client version for searching replay archives with', required=True)
-    parser.add_argument('--output_dir', dest='output_dir', action='store', type=str, default='./archives',
+    parser.add_argument('--archive_dir', dest='a_dir', action='store', type=str, default='./archives',
                         help='the directory where the downloaded replay archives will be saved to')
     return parser.parse_args()
 
@@ -163,7 +170,7 @@ def main():
 
     processed_version = check_build_version(args.s2_client_version)
 
-    get_replay_pack(processed_version, args.client_key, args.client_secret, args.output_dir)
+    get_replay_pack(processed_version, args.client_key, args.client_secret, args.a_dir)
 
 
 if __name__ == '__main__':
