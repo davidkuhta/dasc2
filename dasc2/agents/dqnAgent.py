@@ -1,4 +1,5 @@
-#Built on top of https://github.com/skjb/pysc2-tutorial/blob/master/Building%20an%20Attack%20Agent/attack_agent.py
+# Built on top of https://github.com/skjb/pysc2-tutorial/blob/master/Building%20an%20Attack%20Agent/attack_agent.py
+# Built on top of exploration strategies (https://github.com/awjuliani/DeepRL-Agents/blob/master/Q-Exploration.ipynb)
 
 import random
 import math
@@ -116,9 +117,8 @@ KILL_BUILDING_REWARD = 0.5
 # Set learning parameters
 exploration = "bayesian" #Exploration method. Choose between: greedy, random, e-greedy, boltzmann, bayesian.
 discount = .99 #Discount factor.
-num_episodes = 20000 #Total number of episodes to train network for.
-tau = 0.001 #Amount to update target network at each step.
-batch_size = 32 #Size of training batch
+delta = 0.001 #Target network per step % change
+batch_size = 32
 startE = 1 #Starting chance of random action
 endE = 0.1 #Final chance of random action
 annealing_steps = 20000000 #How many steps of training to reduce startE to endE.
@@ -137,11 +137,11 @@ class exp():
             self.buf[:len(replay)+len(self.buf)-self.size] = []
         self.buf.extend(replay)
 
-def updateTargetGraph(tfVars,tau):
+def updateTargetGraph(tfVars,delta):
     total_vars = len(tfVars)
     op_holder = []
     for idx,var in enumerate(tfVars[0:total_vars//2]):
-        op_holder.append(tfVars[idx+total_vars//2].assign((var.value()*tau) + ((1-tau)*tfVars[idx+total_vars//2].value())))
+        op_holder.append(tfVars[idx+total_vars//2].assign((var.value()*delta) + ((1-delta)*tfVars[idx+total_vars//2].value())))
     return op_holder
 
 def updateTarget(op_holder,sess):
@@ -173,14 +173,14 @@ class deepRLNetwork():
         tf.summary.histogram('qPredict', self.predict)
         # tf.summary.scalar('qDist', self.Q_dist)
 
-        #Below we obtain the loss by taking the sum of squares difference between the target and prediction Q values.
+        # Calculate loss via squared sum reduction
         self.actions = tf.placeholder(shape=[None],dtype=tf.int32)
         self.actions_onehot = tf.one_hot(self.actions,len(smart_actions),dtype=tf.float32)
 
         self.Q = tf.reduce_sum(tf.multiply(self.Q_out, self.actions_onehot), reduction_indices=1)
 
-        self.nextQ = tf.placeholder(shape=[None],dtype=tf.float32)
-        loss = tf.reduce_sum(tf.square(self.nextQ - self.Q))
+        self.next = tf.placeholder(shape=[None],dtype=tf.float32)
+        loss = tf.reduce_sum(tf.square(self.next - self.Q))
         tf.summary.scalar('loss', loss)
         self.trainer = tf.train.AdagradOptimizer(learning_rate=0.0005)
         self.updateModel = self.trainer.minimize(loss)
@@ -207,7 +207,7 @@ class AttackAgent(base_agent.BaseAgent):
 
         self.init = tf.global_variables_initializer()
         self.trainables = tf.trainable_variables()
-        self.targetOps = updateTargetGraph(self.trainables,tau)
+        self.targetOps = updateTargetGraph(self.trainables,delta)
         self.myBuffer = exp(10000)
 
         self.saver = tf.train.Saver()
@@ -318,11 +318,11 @@ class AttackAgent(base_agent.BaseAgent):
             if self.total_steps > pre_train_steps and self.total_steps % 10 == 0:
                 #We use Double-DQN training algorithm
                 trainBatch = self.myBuffer.query(batch_size)
-                Q1 = self.sess.run(self.qlearn.predict,feed_dict={self.qlearn.inputs:np.vstack(trainBatch[:,3]),self.qlearn.keep_per:5.0})
-                Q2 = self.sess.run(self.target_net.Q_out,feed_dict={self.target_net.inputs:np.vstack(trainBatch[:,3]),self.target_net.keep_per:5.0})
-                doubleQ = Q2[range(batch_size),Q1]
-                targetQ = trainBatch[:,2] + (discount*doubleQ)
-                summary, _ = self.sess.run([self.qlearn.merged, self.qlearn.updateModel],feed_dict={self.qlearn.inputs:np.vstack(trainBatch[:,0]),self.qlearn.nextQ:targetQ,self.qlearn.keep_per:5.0,self.qlearn.actions:trainBatch[:,1]},options=self.run_options,run_metadata=self.run_metadata)
+                Q_a = self.sess.run(self.qlearn.predict,feed_dict={self.qlearn.inputs:np.vstack(trainBatch[:,3]),self.qlearn.keep_per:5.0})
+                Q_b = self.sess.run(self.target_net.Q_out,feed_dict={self.target_net.inputs:np.vstack(trainBatch[:,3]),self.target_net.keep_per:5.0})
+                Q_c = Q_b[range(batch_size),Q_a]
+                Q_t = (discount*Q_c) + trainBatch[:,2]
+                summary, _ = self.sess.run([self.qlearn.merged, self.qlearn.updateModel],feed_dict={self.qlearn.inputs:np.vstack(trainBatch[:,0]),self.qlearn.next:Q_t,self.qlearn.keep_per:5.0,self.qlearn.actions:trainBatch[:,1]},options=self.run_options,run_metadata=self.run_metadata)
                 updateTarget(self.targetOps,self.sess)
 
                 if self.total_steps >= 1000:
@@ -366,6 +366,7 @@ class AttackAgent(base_agent.BaseAgent):
         self.previous_killed_unit_score = killed_unit_score
         self.previous_killed_building_score = killed_building_score
         self.previous_used_minerals = total_used_minerals
+        self.previous_army_supply = army_supply
         self.previous_state = current_state
         self.previous_action = rl_action
         self.total_steps += 1
