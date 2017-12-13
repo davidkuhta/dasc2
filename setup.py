@@ -48,10 +48,14 @@ setup(
     install_requires=[
         'future',
         'mpyq',
+        'pysc2'
     ],
     entry_points={
         'console_scripts': [
+            'dasc2_download = dasc2.bin.download_replays:main',
+            'dasc2_extract = dasc2.bin.extract_replays:main',
             'dasc2_filter = dasc2.bin.filter_replays:main',
+            'dasc2_states = dasc2.bin.generate_states:entry_point',
         ],
     },
     extras_require=extras,
