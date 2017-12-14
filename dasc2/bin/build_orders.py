@@ -78,7 +78,7 @@ def build_order(replay_data, build_orders_dir):
                   "enemy_race" : enemy_race, "game_map" : game_map,
                   "replay_id" : replay_id }
 
-   json_filename = os.path.join(build_orders_dir, "Build_Orders_" + replay_id[0:20] + '.json')
+   json_filename = os.path.join(build_orders_dir, "Build_Orders_" + replay_id[0:20] + "_" + str(player_id) + '.json')
    with open(json_filename, 'w') as json_file:
        json.dump(build_data, json_file)
 
@@ -95,7 +95,6 @@ def format_states_data(states_data):
 def build_unit_dict():
     with open(resource_filename(__name__, '../ref/units.json')) as units_data:
         units = json.load(units_data)
-        print(units)
         unit_ids = { int(unit_id) : name for unit_id, name in units.items()}
     return unit_ids
 #     units_json = json.loads(units_file)
