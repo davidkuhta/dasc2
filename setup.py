@@ -32,7 +32,7 @@ extras = {
 
 setup(
     name='daSC2',
-    version='0.0.5-dev1',
+    version='0.1.0-dev2',
     description='Data Analytics Library for StarCraft II',
     long_description=description,
     author='David Kuhta',
