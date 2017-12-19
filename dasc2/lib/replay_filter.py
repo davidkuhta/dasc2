@@ -1,3 +1,19 @@
+#!/usr/bin/env python
+#
+# Copyright 2017 David Kuhta & Anshul Sacheti. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS-IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import print_function
 
 import json
@@ -9,17 +25,22 @@ from mpyq import MPQArchive
 class SC2ReplayFilter(object):
 
     def __init__(self, mmr=1000, apm=10, races=['Zerg','Terr','Prot'],
-                winningRaces=['Zerg','Terr','Prot'],
-                gameMap=None, dataBuild=None):
+                winning_races=['Zerg','Terr','Prot'],
+                game_map=None, data_build=None,
+                replays_dir='./replays', filter_dir='./filters',
+                name='SC2Filter'):
+        self.name = name
         self.mmr_threshold = mmr
         self.apm_threshold = apm
         self.races = races
-        self.winning_races = winningRaces
-        self.map_title = gameMap
-        self.game_version = int(dataBuild) if dataBuild else None
+        self.winning_races = winning_races
+        self.map_title = game_map
+        self.game_version = int(data_build) if data_build else None
+        self.replays_dir = replays_dir
+        self.filter_dir = filter_dir
 
     def _info(self):
-        print("\nFiltering for replays with:")
+        print("\nFiltering for replays for:")
         if self.game_version:
           print("\tGame Build Version:\t"+str(self.game_version))
         if self.map_title:
@@ -27,6 +48,7 @@ class SC2ReplayFilter(object):
         print("\tMinimum MMR of:\t"+str(self.mmr_threshold))
         print("\tMinimum APM of:\t"+str(self.apm_threshold))
         print("\tRaces:\t\t" + ', '.join(self.races))
+        print("\tWinning Races:\t\t" + ', '.join(self.winning_races))
         print('')
 
     def filter(self, replay):

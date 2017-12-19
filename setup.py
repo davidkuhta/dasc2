@@ -1,4 +1,4 @@
-# Copyright 2017 David Kuhta. All Rights Reserved.
+# Copyright 2017 David Kuhta & Anshul Sacheti. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ setup(
             'dasc2_download = dasc2.bin.download_replays:main',
             'dasc2_extract = dasc2.bin.extract_replays:main',
             'dasc2_filter = dasc2.bin.filter_replays:main',
-            'dasc2_states = dasc2.bin.generate_states:entry_point',
+            'dasc2_states = dasc2.bin.generate_states:main',
             'dasc2_build_orders = dasc2.bin.build_orders:main',
         ],
     },
