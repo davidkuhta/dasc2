@@ -86,36 +86,12 @@ for mm_x in range(0, 64):
         if (mm_x + 1) % 16 == 0 and (mm_y + 1) % 16 == 0:
             smart_actions.append(ACTION_ATTACK + '_' + str(mm_x - 8) + '_' + str(mm_y - 8))
 
-# out["score_cumulative"] = np.array([
-#     obs.score.score,
-#     obs.score.score_details.idle_production_time,
-#     obs.score.score_details.idle_worker_time,
-#     obs.score.score_details.total_value_units,
-#     obs.score.score_details.total_value_structures,
-#     obs.score.score_details.killed_value_units,
-#     obs.score.score_details.killed_value_structures,
-#     obs.score.score_details.collected_minerals,
-#     obs.score.score_details.collected_vespene,
-#     obs.score.score_details.collection_rate_minerals,
-#     obs.score.score_details.collection_rate_vespene,
-#     obs.score.score_details.spent_minerals,
-#     obs.score.score_details.spent_vespene,
-# ], dtype=np.int32)
-
-
 SELF_KILLED_UNIT_REWARD = 0
+USED_MINERALS = 0.001
 KILL_UNIT_REWARD = 0.2
 KILL_BUILDING_REWARD = 0.5
 
-# COLLECTION_RATE_MINERALS = out["score_cumulative"][9]/100
-# COLLECTION_RATE_VESPENE = out["score_cumulative"][10]/100
-# USED_MINERALS = out["score_cumulative"][11]/100 # out["score_cumulative"][11]
-# USED_VESPENE = out["score_cumulative"][12]/100 # out["score_cumulative"][12]
-# SELF_KILLED_UNIT_REWARD = -0.1 # Some negative reward, out["score_cumulative"][3], I think
-# SELF_KILLED_BUILDING_REWARD = -0.3 # Some negative reward, out["score_cumulative"][4], I think
-
 # Set learning parameters
-exploration = "bayesian" #Exploration method. Choose between: greedy, random, e-greedy, boltzmann, bayesian.
 discount = .99 #Discount factor.
 delta = 0.001 #Target network per step % change
 batch_size = 32
@@ -301,7 +277,7 @@ class AttackAgent(base_agent.BaseAgent):
                 reward += KILL_BUILDING_REWARD * (killed_building_score - self.previous_killed_building_score)
 
             if total_used_minerals > self.previous_used_minerals:
-                reward += (total_used_minerals - self.previous_used_minerals)/1000
+                reward += (total_used_minerals - self.previous_used_minerals)/USED_MINERALS
 
             if self.previous_army_supply > army_supply:
                 tmp = SELF_KILLED_UNIT_REWARD * (self.previous_army_supply - army_supply)
@@ -336,29 +312,9 @@ class AttackAgent(base_agent.BaseAgent):
         # rl_action = self.qlearn.choose_action(str(current_state))
         # rl_action = self.sess.run([self.qlearn.predict, self.qlearn.Q_out], feed_dict = {self.qlearn.inputs:current_state, self.qlearn.Temp:e})
 
-        if exploration == "greedy":
-            #Choose an action with the maximum expected value.
-            a,allQ = self.sess.run([self.qlearn.predict,self.qlearn.Q_out],feed_dict={self.qlearn.inputs:[current_state],self.qlearn.keep_per:1.0})
-            rl_action = a[0]
-        if exploration == "random":
-            #Choose an action randomly.
-            rl_action = np.random.choice(len(smart_actions))
-        if exploration == "e-greedy":
-            #Choose an action by greedily (with e chance of random action) from the Q-network
-            if np.random.rand(1) < self.e or self.total_steps < pre_train_steps:
-                rl_action = np.random.choice(len(smart_actions))
-            else:
-                a,allQ = self.sess.run([self.qlearn.predict,self.qlearn.Q_out],feed_dict={self.qlearn.inputs:[current_state],self.qlearn.keep_per:1.0})
-                rl_action = a[0]
-        if exploration == "boltzmann":
-            #Choose an action probabilistically, with weights relative to the Q-values.
-            Q_d,allQ = self.sess.run([self.qlearn.Q_dist,self.qlearn.Q_out],feed_dict={self.qlearn.inputs:[current_state],self.qlearn.Temp:self.e,self.qlearn.keep_per:1.0})
-            a = np.random.choice(Q_d[0],p=Q_d[0])
-            rl_action = np.argmax(Q_d[0] == a)
-        if exploration == "bayesian":
-            #Choose an action using a sample from a dropout approximation of a bayesian q-network.
-            a,allQ = self.sess.run([self.qlearn.predict,self.qlearn.Q_out],feed_dict={self.qlearn.inputs:[current_state],self.qlearn.keep_per:(1-self.e)+0.1})
-            rl_action = a[0]
+        #bayesian q-network to sample for actions
+        a,allQ = self.sess.run([self.qlearn.predict,self.qlearn.Q_out],feed_dict={self.qlearn.inputs:[current_state],self.qlearn.keep_per:(1-self.e)+0.1})
+        rl_action = a[0]
 
         smart_action = smart_actions[rl_action]
 
