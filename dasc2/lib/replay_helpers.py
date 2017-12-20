@@ -14,11 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""A module containing helper functions for manipulating replays"""
+
 import json
 
 from pkg_resources import resource_filename
 
-def get_label(versions, build_label, is_label):
+def __get_label(versions, build_label, is_label):
 	"""Evaluates the provided build_label and returns if supported
 
 	    Args:
@@ -43,7 +45,7 @@ def get_label(versions, build_label, is_label):
 			return build_label
 		raise ValueError('Build version not supported')
 
-def get_version(versions, build_version, is_version):
+def __get_version(versions, build_version, is_version):
 	"""Evaluates entered build_version and returns if supported
 
 	    Args:
@@ -94,17 +96,16 @@ def check_build_version(build_version, return_label):
 	# Process the build_version based on whether it's a str/int and the desired return value
 	if type(build_version) is str and return_label:
 		# build_version is a label, and we want a label returned
-		return get_label(versions, build_version, True)
+		return __get_label(versions, build_version, True)
 		# build_version is a label, but we want a version returned
 	elif type(build_version) is str:
-		return get_version(versions, build_version, False)
+		return __get_version(versions, build_version, False)
 	elif type(build_version) is int and return_label:
 		# build_version is a version, but we want a label returned
-		return get_label(versions, build_version, False)
+		return __get_label(versions, build_version, False)
 	elif type(build_version) is int:
 		# build_version is a version, and we want a version returned
-		return get_version(versions, build_version, True)
+		return __get_version(versions, build_version, True)
 	else:
 			# build version isn't a string or integer 
 		raise TypeError('Incorrect build version type')
-

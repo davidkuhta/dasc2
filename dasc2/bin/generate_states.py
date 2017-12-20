@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # portions utilized from Deepmind/pysc2 replay_actions.py in accordance
-# with the license below
+# with the license below:
 #
 # Copyright 2017 Google Inc. All Rights Reserved.
 #

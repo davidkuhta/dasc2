@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Generate unit/technology build orders from replay states"""
+
 import os
 import json
 import argparse
@@ -21,7 +23,7 @@ import collections
 
 from pkg_resources import resource_filename
 
-def create_unit_dict():
+def __create_unit_dict():
     """Constructs a dictionary of unit_ids to unit_labels
         
         Returns:
@@ -33,12 +35,12 @@ def create_unit_dict():
         unit_ids = { int(unit_id) : name for unit_id, name in units.items()}
     return unit_ids
 
-def units_seen(states, army_type):
+def __units_seen(states, army_type):
     """Identifies units seen, adding to dictionary in the order seen
 
         Args:
-            states: list of game states.
-            army_type: string "Commanding" or "Opposing".
+            states (list):          list of game states.
+            army_type (string):     "Commanding" or "Opposing".
         
         Returns:
             Dictionary: { unit_id : step_when_seen } <int> : <int>
@@ -51,12 +53,12 @@ def units_seen(states, army_type):
 
     return units_seen_dict
 
-def label_units(units_dict, unit_id_dict):
+def __label_units(units_dict, unit_id_dict):
     """Remaps the keys of dictionary to their label in another dictionary
 
         Args:
-            units_dict: Dictionary of unit_ids to steps_when_seen.
-            unit_id_dict: Dictionary of unit_ids to unit_labels.
+            units_dict (dict):      Dictionary of unit_ids to steps_when_seen.
+            unit_id_dict (dict):    Dictionary of unit_ids to unit_labels.
         
         Returns:
             Dictionary: { unit_id : step_when_seen } <int> : <int>
@@ -77,16 +79,16 @@ def build_order(states, unit_id_dict):
     """Generates the build data for one replay
 
         Args:
-            states: list of states for a particular replay.
-            unit_id_dict: dictionary to use for relabeling.
+            states (list):          List of states for a particular replay.
+            unit_id_dict (dict):    Dictionary to use for relabeling.
         
         Returns:
             Dictionary: { "Commanding" : ..., "Opposing" : ... } <string> : <list>
     """
-    commanding_b_o = units_seen(states, 'Commanding')
-    opposing_b_o = units_seen(states, 'Opposing')
-    labeled_commanding_b_o = label_units(commanding_b_o, unit_id_dict)
-    labeled_opposing_b_o = label_units(opposing_b_o, unit_id_dict)
+    commanding_b_o = __units_seen(states, 'Commanding')
+    opposing_b_o = __units_seen(states, 'Opposing')
+    labeled_commanding_b_o = __label_units(commanding_b_o, unit_id_dict)
+    labeled_opposing_b_o = __label_units(opposing_b_o, unit_id_dict)
 
     build_data = { "Commanding " : labeled_commanding_b_o.keys(),
                     "Opposing" : labeled_opposing_b_o.keys() }
@@ -97,8 +99,8 @@ def build_orders(states_dir='./states', build_orders_dir='./build_orders'):
     """Process as state files in a directory, generating build orders for each
 
         Args:
-            states_dir: Directory containing a list of states.
-            build_orders_dir: Directory to output build orders.
+            states_dir (str):       Directory containing a list of states.
+            build_orders_dir (str): Directory to output build orders.
     """
 
     # If states directory exists
@@ -109,7 +111,7 @@ def build_orders(states_dir='./states', build_orders_dir='./build_orders'):
             os.makedirs(build_orders_dir)
 
         state_files = []
-        unit_id_dict = create_unit_dict()
+        unit_id_dict = __create_unit_dict()
 
         # Iterate through files in states directory evaluating
         # only those that are json and appending to a running list
@@ -117,14 +119,14 @@ def build_orders(states_dir='./states', build_orders_dir='./build_orders'):
             if file.endswith(".json"):
                 state_files.append(os.path.join(states_dir, file))
 
-            # We'll try to use tqdm for pretty printing a status bar
-            # which will succeed if the user selected to install it
-            # during the `pip install dasc2`
-            try:
-                from tqdm import tqdm
-                state_files = tqdm(state_files)
-            except ImportError:
-                pass
+        # We'll try to use tqdm for pretty printing a status bar
+        # which will succeed if the user selected to install it
+        # during the `pip install dasc2`
+        try:
+            from tqdm import tqdm
+            state_files = tqdm(state_files)
+        except ImportError:
+            pass
 
         # Iterate through the list of state files
         for states_file in state_files:
@@ -154,8 +156,7 @@ def build_orders(states_dir='./states', build_orders_dir='./build_orders'):
                 json_file.write('\n')
 
 def parse_args():
-    """Helper function to parse dasc2_build_order arguments
-    """
+    """Helper function to parse dasc2_build_order arguments"""
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--states_dir', dest='s_dir', action='store',
@@ -164,7 +165,6 @@ def parse_args():
     parser.add_argument('--build_orders_dir', dest='bo_dir', action='store',
                         default='./build_orders', help='Directory where build orders are to be generated',
                         required=False)
-
 
     return parser.parse_args()
 

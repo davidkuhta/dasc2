@@ -1,5 +1,8 @@
 #!/usr/bin/python
 #
+# portions referenced from Deepmind/pysc2 replay_actions.py
+# in accordance with the license below:
+#
 # Copyright 2017 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +16,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# portions referenced from Deepmind/pysc2 replay_actions.py
 
 from __future__ import absolute_import
 from __future__ import division
@@ -45,7 +46,7 @@ from s2clientprotocol import common_pb2 as sc_common
 from s2clientprotocol import sc2api_pb2 as sc_pb
 
 from dasc2.lib.stats import ProcessStats
-from dasc2.lib.process_helpers import army_count, update_minimap
+from dasc2.lib.process_helpers import army_count, process_minimap
 
 import numpy as np
 import json
@@ -246,20 +247,28 @@ class ReplayProcessor(multiprocessing.Process):
         self.stats.replay_stats.valid_actions[ability_id] += 1
 
       all_features = feat.transform_obs(obs.observation)
-      #remove elevation, viz and selected data from minimap
-      minimap_data = all_features['minimap'][2:6,:,:]
-      screen = all_features['screen']
 
-      mini_shape = minimap_data.shape
-      minimap = np.zeros(shape=(11,mini_shape[1],mini_shape[2]),dtype=np.int)
-      minimap[0:4,:,:] = minimap_data
-      extended_minimap = update_minimap(minimap,screen).tolist()
+      # #remove elevation, viz and selected data from minimap
+
+      # minimap_data = all_features['minimap'][2:6,:,:]
+      # screen = all_features['screen']
+
+      # mini_shape = minimap_data.shape
+      # minimap = np.zeros(shape=(11,mini_shape[1],mini_shape[2]),dtype=np.int)
+      # minimap[0:4,:,:] = minimap_data
+      # extended_minimap = update_minimap(minimap,screen).tolist()
         
       # Retrieve army counts
+
+      minimap = all_features['minimap']
+      screen = all_features['screen']
+
+      minimap_data = process_minimap(minimap, screen)
+
       commanding_army = army_count(screen, 1)
       opposing_army = army_count(screen, 4)
 
-      full_state = { "Step": step, "ExtendedMinimap":extended_minimap,
+      full_state = { "Step": step, "MinimapData": minimap_data,
                     "Armies" : { "Commanding" : commanding_army, "Opposing" : opposing_army } ,
                     "AllFeatPlayer":all_features['player'].tolist(), 
                     "AllFeatAvailActions":all_features['available_actions'].tolist(), "Actions":actions }

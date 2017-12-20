@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 #
+# Portions of code reused from following link in accordance with license below:
+# https://github.com/Blizzard/s2client-proto/blob/master/samples/replay-api/download_replays.py
+#
 # Copyright (c) 2017 Blizzard Entertainment
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,9 +22,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-#
-# Portions of code reused from following link in accordance with license above:
-# https://github.com/Blizzard/s2client-proto/blob/master/samples/replay-api/download_replays.py
+
+"""Downloads SC2Replay files using the Blizzard API"""
 
 import os
 import requests
@@ -123,7 +125,7 @@ def get_replay_pack(client_version, client_key, client_secret, output_dir, extra
             file_path = meta_file_info['path']
             download_urls.append(urlparse.urljoin(download_base_url, file_path))
 
-        # Download replay packs.
+        
         files = []
 
         sorted_urls = sorted(download_urls)
@@ -137,6 +139,7 @@ def get_replay_pack(client_version, client_key, client_secret, output_dir, extra
         except ImportError:
             pass
 
+        # Download replay packs.
         for archive_url in sorted_urls:
             print 'Downloading replay packs. url='  + archive_url
             files.append(download_file(archive_url, output_dir))
@@ -147,9 +150,9 @@ def get_replay_pack(client_version, client_key, client_secret, output_dir, extra
 
 
 def parse_args():
-    """Helper function to parse dasc2_download arguments
-    """
+    """Helper function to parse dasc2_download arguments"""
     parser = argparse.ArgumentParser()
+
     parser.add_argument('--key', dest='client_key', action='store', type=str,
                         help='Battle.net API key', required=True)
     parser.add_argument('--secret', dest='client_secret', action='store', type=str,
@@ -158,12 +161,14 @@ def parse_args():
                         help='Starcraft2 client version for searching replay archives with', required=True)
     parser.add_argument('--archive_dir', dest='a_dir', action='store', type=str, default='./archives',
                         help='the directory where the downloaded replay archives will be saved to')
+    
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
 
+    # Process user inputed build_version to allow for version (ex: 58977) or label (ex: "4.0.2")
     processed_version = str(check_build_version(args.s2_client_version, True))
 
     get_replay_pack(processed_version, args.client_key, args.client_secret, args.a_dir)
