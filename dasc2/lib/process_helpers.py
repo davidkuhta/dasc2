@@ -66,6 +66,7 @@ def army_count(screen, alignment):
       (dict) of units as key and total screen pixels of that unit type as values.
   """
   # Initialize an empty list to hold units
+
   army = []
   # Identify units matching the given alignment using a masking technique
   army_units = np.multiply((screen[sf['player_relative']] == alignment).astype(np.int), screen[sf['unit_type']])
@@ -74,8 +75,10 @@ def army_count(screen, alignment):
   army_dict = defaultdict(int)
   # Create a generator to iterate through a flat list of units of the desired alignment
   # that are non-zero and their corresponding pixel counts on the screen
+
   gen = (unit for unit in zip(army_units.flatten(), screen[sf['unit_density']].flatten()) if unit[0])
   # Implement the generator to construct the new army dictionary
+  
   for unit in gen:
     army_dict[str(unit[0])] += unit[1]
     

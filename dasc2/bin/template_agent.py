@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Extracts SC2Replay files from .zip archives"""
+"""Copies SC2 Agent templates to the designed directory"""
 
 import os
 import shutil
@@ -32,7 +32,7 @@ def template_agent(agent, agents_dir='./agents', name=None):
             remove (bool):      Remove the archive files upon extraction.
     """
     agents = {
-                "dasc2" : resource_filename(__name__, '../ref/agents/dasc2_agent.py'),
+                "dasc2" : resource_filename(__name__, '../agent/dasc2_agent.py'),
                 "base": resource_filename('pysc2', 'agents/base_agent.py'),
                 "random": resource_filename('pysc2', 'agents/random_agent.py'),
                 "scripted": resource_filename('pysc2', 'agents/scripted_agent.py')
@@ -80,7 +80,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--agent', dest='agent', action='store', type=str, default='dasc2',
-                        help='The desired agent template to copy')
+                        help='The desired agent template to copy', required=True)
     parser.add_argument('--agents_dir', dest='a_dir', action='store', type=str, default='./agents',
                         help='Directory in which to generate agent templates')
     parser.add_argument('--name', dest='name', action='store', type=str,

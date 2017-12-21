@@ -92,6 +92,7 @@ class ReplayProcessor(multiprocessing.Process):
     self.replay_list = self.saved_replay_list()
 
   def saved_replay_list(self):
+    """Formulate a list of all previously processed replay files"""
     replays = []
     for root, dirs, files in os.walk(self.states_dir):
         for name in files:

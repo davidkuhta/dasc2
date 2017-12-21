@@ -1,8 +1,31 @@
-# Built on top of https://github.com/skjb/pysc2-tutorial/blob/master/Building%20an%20Attack%20Agent/attack_agent.py
-# Built on top of exploration strategies (https://github.com/awjuliani/DeepRL-Agents/blob/master/Q-Exploration.ipynb)
+# portions of code derived from https://github.com/skjb/pysc2-tutorial attack_agent.py
+# in accordance with the license below:
+#
+# MIT License
+
+# Copyright (c) 2017 Steven Brown
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 import random
 import math
+import os
 
 import numpy as np
 import pandas as pd
@@ -11,10 +34,12 @@ from pysc2.agents import base_agent
 from pysc2.lib import actions
 from pysc2.lib import features
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
+# import tensorflow.contrib.slim as slim
 from tensorflow.python.ops import rnn, rnn_cell
 
-import os
+from dasc2.agent.exp import exp
+from dasc2.agent.helper import build_actions, updateTarget, updateTargetGraph, learning_params as lp
+from dasc2.agent.deep_rl_network import DeepRLNetwork
 
 _NO_OP = actions.FUNCTIONS.no_op.id
 _SELECT_POINT = actions.FUNCTIONS.select_point.id
@@ -55,20 +80,6 @@ ACTION_SELECT_CC = 'selectcc'
 ACTION_SCV_MINERALS = 'scvminerals'
 ACTION_SCV_VESPENE = 'scvvespene'
 
-# smart_actions = [
-#     ACTION_NO_OP,
-#     ACTION_SELECT_SCV,
-#     ACTION_BUILD_SUPPLY_DEPOT,
-#     ACTION_BUILD_BARRACKS1,
-#     ACTION_SELECT_BARRACKS1,
-#     ACTION_BUILD_MARINE,
-#     ACTION_SELECT_ARMY,
-#     ACTION_BUILD_SCV,
-#     ACTION_SELECT_CC,
-#     ACTION_SCV_MINERALS,
-#     ACTION_SCV_VESPENE,
-# ]
-
 smart_actions = [
     ACTION_NO_OP,
     ACTION_SELECT_SCV,
@@ -91,77 +102,6 @@ USED_MINERALS = 0.001
 KILL_UNIT_REWARD = 0.2
 KILL_BUILDING_REWARD = 0.5
 
-# Set learning parameters
-discount = .99 #Discount factor.
-delta = 0.001 #Target network per step % change
-batch_size = 32
-startE = 1 #Starting chance of random action
-endE = 0.1 #Final chance of random action
-annealing_steps = 20000000 #How many steps of training to reduce startE to endE.
-pre_train_steps = 64 #Number of steps used before training updates begin.
-
-class exp():
-    def __init__(self, size = 1000):
-        self.size = size
-        self.buf = []
-
-    def query(self, size):
-        return np.reshape(np.array(random.sample(self.buf,size)),[size,4])
-
-    def append(self, replay):
-        if self.size <= len(self.buf) + len(replay):
-            self.buf[:len(replay)+len(self.buf)-self.size] = []
-        self.buf.extend(replay)
-
-def updateTargetGraph(tfVars,delta):
-    total_vars = len(tfVars)
-    op_holder = []
-    for idx,var in enumerate(tfVars[0:total_vars//2]):
-        op_holder.append(tfVars[idx+total_vars//2].assign((var.value()*delta) + ((1-delta)*tfVars[idx+total_vars//2].value())))
-    return op_holder
-
-def updateTarget(op_holder,sess):
-    for op in op_holder:
-        sess.run(op)
-
-class deepRLNetwork():
-    def __init__(self, smart_actions, state_size):
-        # Deep Qnetwork
-        # Based off of exploration strategies (https://github.com/awjuliani/DeepRL-Agents/blob/master/Q-Exploration.ipynb)
-        self.inputs = tf.placeholder(shape=[None,state_size],dtype=tf.float32)
-        tf.summary.histogram('Rewards', self.inputs)
-        self.Temp = tf.placeholder(shape=None,dtype=tf.float32)
-        self.keep_per = tf.placeholder(shape=None,dtype=tf.float32)
-
-        hidden = slim.fully_connected(self.inputs,32,activation_fn=None,biases_initializer=None)
-        hidden = slim.dropout(hidden,self.keep_per)
-        # hidden = tf.nn.rnn_cell.LSTMCell(hidden)
-        hidden = slim.fully_connected(hidden,64,activation_fn=tf.nn.tanh,biases_initializer=None)
-        hidden = slim.dropout(hidden,self.keep_per)
-        hidden = slim.fully_connected(hidden,32,activation_fn=None,biases_initializer=None)
-        hidden = slim.dropout(hidden,self.keep_per)
-        self.Q_out = slim.fully_connected(hidden,len(smart_actions),activation_fn=None,biases_initializer=None)
-
-        self.predict = tf.argmax(self.Q_out,1)
-        self.Q_dist = tf.nn.softmax(self.Q_out/self.Temp)
-
-        tf.summary.histogram('qOut', self.Q_out)
-        tf.summary.histogram('qPredict', self.predict)
-        # tf.summary.scalar('qDist', self.Q_dist)
-
-        # Calculate loss via squared sum reduction
-        self.actions = tf.placeholder(shape=[None],dtype=tf.int32)
-        self.actions_onehot = tf.one_hot(self.actions,len(smart_actions),dtype=tf.float32)
-
-        self.Q = tf.reduce_sum(tf.multiply(self.Q_out, self.actions_onehot), reduction_indices=1)
-
-        self.next = tf.placeholder(shape=[None],dtype=tf.float32)
-        loss = tf.reduce_sum(tf.square(self.next - self.Q))
-        tf.summary.scalar('loss', loss)
-        self.trainer = tf.train.AdagradOptimizer(learning_rate=0.0005)
-        self.updateModel = self.trainer.minimize(loss)
-        self.merged = tf.summary.merge_all()
-
 class AttackAgent(base_agent.BaseAgent):
     def __init__(self):
         super(AttackAgent, self).__init__()
@@ -178,12 +118,12 @@ class AttackAgent(base_agent.BaseAgent):
 
         # Initializations/Tensorboard
         tf.reset_default_graph()
-        self.qlearn = deepRLNetwork(smart_actions, self.state_size)
-        self.target_net = deepRLNetwork(smart_actions, self.state_size)
+        self.qlearn = DeepRLNetwork(smart_actions, self.state_size)
+        self.target_net = DeepRLNetwork(smart_actions, self.state_size)
 
         self.init = tf.global_variables_initializer()
         self.trainables = tf.trainable_variables()
-        self.targetOps = updateTargetGraph(self.trainables,delta)
+        self.targetOps = updateTargetGraph(self.trainables,lp["delta"])
         self.myBuffer = exp(10000)
 
         self.saver = tf.train.Saver()
@@ -197,11 +137,9 @@ class AttackAgent(base_agent.BaseAgent):
 
         self.sess.run(self.init)
         updateTarget(self.targetOps,self.sess)
-        self.e = startE
-        self.stepDrop = (startE-endE)/annealing_steps
+        self.e = lp["startE"]
+        self.stepDrop = (lp["startE"]-lp["endE"])/lp["annealing_steps"]
         self.total_steps = 0
-
-        # self.qlearn = QLearningTable(actions=list(range(len(smart_actions))))
 
     def transformDistance(self, x, x_distance, y, y_distance):
         if not self.base_top_left:
@@ -288,16 +226,16 @@ class AttackAgent(base_agent.BaseAgent):
 
             self.myBuffer.append(np.reshape(np.array([self.previous_state,self.previous_action,reward,current_state]),[1,4]))
 
-            if self.e > endE and self.total_steps > pre_train_steps:
+            if self.e > lp["endE"] and self.total_steps > lp["pre_train_steps"]:
                 self.e -= self.stepDrop
 
-            if self.total_steps > pre_train_steps and self.total_steps % 10 == 0:
+            if self.total_steps > lp["pre_train_steps"] and self.total_steps % 10 == 0:
                 #We use Double-DQN training algorithm
-                trainBatch = self.myBuffer.query(batch_size)
+                trainBatch = self.myBuffer.query(lp["batch_size"])
                 Q_a = self.sess.run(self.qlearn.predict,feed_dict={self.qlearn.inputs:np.vstack(trainBatch[:,3]),self.qlearn.keep_per:5.0})
                 Q_b = self.sess.run(self.target_net.Q_out,feed_dict={self.target_net.inputs:np.vstack(trainBatch[:,3]),self.target_net.keep_per:5.0})
-                Q_c = Q_b[range(batch_size),Q_a]
-                Q_t = (discount*Q_c) + trainBatch[:,2]
+                Q_c = Q_b[range(lp["batch_size"]),Q_a]
+                Q_t = (lp["discount"]*Q_c) + trainBatch[:,2]
                 summary, _ = self.sess.run([self.qlearn.merged, self.qlearn.updateModel],feed_dict={self.qlearn.inputs:np.vstack(trainBatch[:,0]),self.qlearn.next:Q_t,self.qlearn.keep_per:5.0,self.qlearn.actions:trainBatch[:,1]},options=self.run_options,run_metadata=self.run_metadata)
                 updateTarget(self.targetOps,self.sess)
 

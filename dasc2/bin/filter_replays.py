@@ -151,7 +151,7 @@ def parse_args():
     parser.add_argument('--game_map', dest='map', action='store', default=None,
                         help='Select a map or default to all', required=False)
     parser.add_argument('--build', dest='vers', action='store', default=None,
-                        help='Select a game build version', required=False)
+                        help='Select a game build version', required=True)
     parser.add_argument('--replays_dir', dest='r_dir', action='store',
                         default='./replays', help='Directory where replays are stored',
                         required=False)
