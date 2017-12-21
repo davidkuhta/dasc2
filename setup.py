@@ -58,6 +58,7 @@ setup(
             'dasc2_filter = dasc2.bin.filter_replays:main',
             'dasc2_states = dasc2.bin.generate_states:main',
             'dasc2_build_orders = dasc2.bin.build_orders:main',
+            'dasc2_template_agent = dasc2.bin.template_agent:main',
         ],
     },
     extras_require=extras,
