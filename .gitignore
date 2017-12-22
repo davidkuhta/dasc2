@@ -1,5 +1,6 @@
 *.pyc
 
+src/
 build/
 dist/
 test/
