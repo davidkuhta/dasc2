@@ -37,6 +37,8 @@ $ git clone https://github.com/davidkuhta/dasc2.git
 $ pip install dasc2/
 ```
 
+# Available Commands
+
 ## Download replays
 This tool allows for the downloading of .SC2Replay archives via Blizzard's API.
 
@@ -77,10 +79,8 @@ In accordance with Blizzard's EULA you will be prompted for agreement to the
 ## Filter replays
 
 This tool filters `.SC2Replay` files within the denoted directory,
-generating two files containing information related to the replay files meeting
+generating a filter file containing information related to the replay files meeting
 the filtering criteria:
-  * `filtered_replays_MMR_XXXX_APM_XX_timestamp.txt` - list of replays files meeting filtering criteria.
-  * `filtered_replays_MMR_XXXX_APM_XX_timestamp.txt` - list of dictionaries of the replay metadata (replay file name as the key).
 
 You can filter replays using the command:
 `dasc2_filter`
@@ -94,17 +94,18 @@ You can filter replays using the command:
 |`--min_mmr`   |Set the minimum player MMR 			|1000						|
 |`--min_apm`   |Set the minimum player APM 			|10							|
 |`--races`     |Filter on certain races 			|Zerg Terr Prot 			|
-|`--races`     |Filter on certain races 			|Zerg Terr Prot 			|
+|`--winning_races`     |Filter on whether the winner belongs to a certain race 			|Zerg Terr Prot 			|
 |`--game_map`  |Filter based on map title|all maps	|							|
 |`--build`     |Filter based on game build version	|							|
 |`--full_path` |Flag denoting filters should list full path of replays	|							|
+
 Note: no commas needed between race names
 
 ## Generate replay states
 
-This tool generates replay states for a list of replays denoted in a `txt` file.
+This tool generates replay states for a list of replays denoted in a filter file.
 Note corrupted replays will be skipped so yield may be less than 100% as compared
-to the provide list.
+to the input list.
 
 You can generate replay states using the command:
 `dasc2_states`
@@ -113,6 +114,7 @@ You can generate replay states using the command:
 |flag          |description							                   |
 |--------------|-------------------------------------------|						
 |`--replay_list`|File containing list of replays to evaluate|
+|`--filter_file`|File cotaining filter information				|
 
 ### Optional Flags
 |flag          |description							|default					|
@@ -126,7 +128,8 @@ You can generate replay states using the command:
 
 ## Build Orders
 
-This tool generates json files
+This tool generates json files containing replay information including build orders
+for both a player and their opponent
 
 You can generate replay states using the command:
 `dasc2_build_orders`
@@ -143,6 +146,32 @@ You can generate replay states using the command:
 |`--states_dir`|Directory where states are located				|`./states`|
 |`--build_orders_dir`|Directory in which to generate build orders|`./build_orders`|
 
+## Template Agent
+
+This tool generates a duplicate of existing agents for use as templates.
+
+Available agents include:
+
+* dasc2 (An RL agent)
+* base (pysc2's base agent)
+* scripted (pysc2's scripted agent)
+* random (pysc2's random agent)
+
+You can generate replay states using the command:
+`dasc2_template_agents`
+
+### Required Flags
+|flag          |description							                   |
+|--------------|-------------------------------------------|						
+|`--agent`|Agent to create a template of.|
+
+### Optional Flags
+|flag          |description							|default					|
+|--------------|------------------------------------|---------------------------|
+|`-h, --help`  |Show help message					|							|
+|`--agents_dir`|Directory where agents are to be generated				|`./agents`|
+|`--name`|The filename to rename the agent to|`./build_orders`|
+
 # Replays
 
 ## Obtaining Replays
@@ -155,6 +184,6 @@ You can generate replay states using the command:
 # Attribution
 
 We'd like to thank [Blizzard](https://github.com/Blizzard/s2client-proto/),
-[Deepmind](https://github.com/deepmind/pysc2), and [Cole Maclean](https://github.com/cole-maclean/autocraft),
+[Deepmind](https://github.com/deepmind/pysc2), [Arthur Juliani](https://github.com/awjuliani), and [Cole Maclean](https://github.com/cole-maclean/autocraft),
 for the influence each of their projects had on daSC2. Any code utilized
 was in accordance with it's respective license.

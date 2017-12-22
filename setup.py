@@ -1,4 +1,4 @@
-# Copyright 2017 David Kuhta. All Rights Reserved.
+# Copyright 2017 David Kuhta & Anshul Sacheti. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ extras = {
 
 setup(
     name='daSC2',
-    version='0.1.0-dev2',
+    version='0.2.0-dev3',
     description='Data Analytics Library for StarCraft II',
     long_description=description,
     author='David Kuhta',
@@ -44,7 +44,8 @@ setup(
         'dasc2',
         'dasc2.bin',
         'dasc2.lib',
-        'dasc2.ref'
+        'dasc2.ref',
+        'dasc2.agent'
     ],
     install_requires=[
         'future',
@@ -56,8 +57,9 @@ setup(
             'dasc2_download = dasc2.bin.download_replays:main',
             'dasc2_extract = dasc2.bin.extract_replays:main',
             'dasc2_filter = dasc2.bin.filter_replays:main',
-            'dasc2_states = dasc2.bin.generate_states:entry_point',
+            'dasc2_states = dasc2.bin.generate_states:main',
             'dasc2_build_orders = dasc2.bin.build_orders:main',
+            'dasc2_template_agent = dasc2.bin.template_agent:main',
         ],
     },
     extras_require=extras,

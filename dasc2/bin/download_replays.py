@@ -2,6 +2,7 @@
 #
 # Portions of code reused from following link in accordance with license below:
 # https://github.com/Blizzard/s2client-proto/blob/master/samples/replay-api/download_replays.py
+#
 # Copyright (c) 2017 Blizzard Entertainment
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,6 +23,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+"""Downloads SC2Replay files using the Blizzard API"""
+
 import os
 import requests
 import json
@@ -29,24 +32,11 @@ import argparse
 import urlparse
 import shutil
 
-from pkg_resources import resource_filename
+from dasc2.lib.replay_helpers import check_build_version
 
 API_BASE_URL = 'https://us.api.battle.net'
 API_NAMESPACE = 's2-client-replays'
 
-def check_build_version(build_version):
-    version_file = open(resource_filename(__name__, '../ref/build_versions.json')).read()
-    versions = json.loads(version_file)
-
-    # Check if supplied build matches a build version label
-    if any(v['label'] == str(build_version) for v in versions):
-        return build_version
-
-    # Check if supplied build version matches a 'version'
-    build_label = next((v['label'] for v in versions if (v['version'] == int(build_version))), None)
-    if build_label:
-        return build_label
-    raise ValueError('Build version not supported')
 
 def get_bnet_oauth_access_token(url, key, secret):
     headers = { "Content-Type": "application/json"}
@@ -60,6 +50,7 @@ def get_bnet_oauth_access_token(url, key, secret):
     if 'access_token' in response:
         return response['access_token']
     raise Exception('Failed to get oauth access token. response={}'.format(response))
+
 
 def get_base_url(access_token):
     headers = {"Authorization": "Bearer " + access_token}
@@ -134,16 +125,21 @@ def get_replay_pack(client_version, client_key, client_secret, output_dir, extra
             file_path = meta_file_info['path']
             download_urls.append(urlparse.urljoin(download_base_url, file_path))
 
-        # Download replay packs.
+        
         files = []
 
         sorted_urls = sorted(download_urls)
+
+        # We'll try to use tqdm for pretty printing a status bar
+        # which will succeed if the user selected to install it
+        # during the `pip install dasc2`
         try:
             from tqdm import tqdm
             sorted_urls = tqdm(sorted_urls)
         except ImportError:
             pass
 
+        # Download replay packs.
         for archive_url in sorted_urls:
             print 'Downloading replay packs. url='  + archive_url
             files.append(download_file(archive_url, output_dir))
@@ -154,7 +150,9 @@ def get_replay_pack(client_version, client_key, client_secret, output_dir, extra
 
 
 def parse_args():
+    """Helper function to parse dasc2_download arguments"""
     parser = argparse.ArgumentParser()
+
     parser.add_argument('--key', dest='client_key', action='store', type=str,
                         help='Battle.net API key', required=True)
     parser.add_argument('--secret', dest='client_secret', action='store', type=str,
@@ -163,12 +161,15 @@ def parse_args():
                         help='Starcraft2 client version for searching replay archives with', required=True)
     parser.add_argument('--archive_dir', dest='a_dir', action='store', type=str, default='./archives',
                         help='the directory where the downloaded replay archives will be saved to')
+    
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
 
-    processed_version = check_build_version(args.s2_client_version)
+    # Process user inputed build_version to allow for version (ex: 58977) or label (ex: "4.0.2")
+    processed_version = str(check_build_version(args.s2_client_version, True))
 
     get_replay_pack(processed_version, args.client_key, args.client_secret, args.a_dir)
 
