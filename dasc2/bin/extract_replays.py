@@ -76,7 +76,10 @@ def __prompt_for_licensing_agreement(license_agreement):
     # Output the license_agreement and prompt
         sys.stdout.write(license_agreement + prompt)
     # Assign user input to choice
-        choice = raw_input().lower()
+        try:
+            choice = raw_input().lower()
+        except NameError:
+            choice = input().lower()
 
     # If user entires a valid option return it's corresponding value
         if choice in valid_option:

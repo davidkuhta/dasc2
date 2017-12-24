@@ -29,8 +29,14 @@ import os
 import requests
 import json
 import argparse
-import urlparse
 import shutil
+
+# support both python 2 & 3
+try:
+    import urlparse as urlparser
+except ImportError:
+    import urllib.parse as urlparser
+
 
 from dasc2.lib.replay_helpers import check_build_version
 
@@ -57,7 +63,7 @@ def get_base_url(access_token):
     params = {
         'namespace' : API_NAMESPACE,
     }
-    response = requests.get(urlparse.urljoin(API_BASE_URL, "/data/sc2/archive_url/base_url"), headers=headers,
+    response = requests.get(urlparser.urljoin(API_BASE_URL, "/data/sc2/archive_url/base_url"), headers=headers,
                           params=params)
     return json.loads(response.text)["base_url"]
 
@@ -69,7 +75,7 @@ def search_by_client_version(access_token, client_version):
         'client_version' : client_version,
         '_pageSize' : 25
     }
-    response = requests.get(urlparse.urljoin(API_BASE_URL, "/data/sc2/search/archive"), headers=headers, params=params)
+    response = requests.get(urlparser.urljoin(API_BASE_URL, "/data/sc2/search/archive"), headers=headers, params=params)
     response = json.loads(response.text)
     meta_urls = []
     for result in response['results']:
@@ -111,19 +117,19 @@ def get_replay_pack(client_version, client_key, client_secret, output_dir, extra
         download_base_url = get_base_url(access_token)
 
         # Get meta file infos for the give client version
-        print 'Searching replay packs with client version=' + client_version
+        print('Searching replay packs with client version=' + client_version)
         meta_file_urls = search_by_client_version(access_token, client_version)
         if len(meta_file_urls) == 0:
-            print 'No matching replay packs found for the client version!'
+            print('No matching replay packs found for the client version!')
             return
 
         # For each meta file, construct full url to download replay packs
-        print 'Building urls for downloading replay packs. num_files={0}'.format(len(meta_file_urls))
+        print('Building urls for downloading replay packs. num_files={0}'.format(len(meta_file_urls)))
         download_urls=[]
         for meta_file_url in meta_file_urls:
             meta_file_info = get_meta_file_info(access_token, meta_file_url)
             file_path = meta_file_info['path']
-            download_urls.append(urlparse.urljoin(download_base_url, file_path))
+            download_urls.append(urlparser.urljoin(download_base_url, file_path))
 
         
         files = []
@@ -141,12 +147,12 @@ def get_replay_pack(client_version, client_key, client_secret, output_dir, extra
 
         # Download replay packs.
         for archive_url in sorted_urls:
-            print 'Downloading replay packs. url='  + archive_url
+            print('Downloading replay packs. url='  + archive_url)
             files.append(download_file(archive_url, output_dir))
 
     except Exception as e:
         import traceback
-        print 'Failed to download replay packs. traceback={}'.format(traceback.format_exc())
+        print('Failed to download replay packs. traceback={}'.format(traceback.format_exc()))
 
 
 def parse_args():
