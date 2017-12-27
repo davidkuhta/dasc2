@@ -1,1 +1,1 @@
-include ref/build_versions.json
+recursive-include dasc2/data *

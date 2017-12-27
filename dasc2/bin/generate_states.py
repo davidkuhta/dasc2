@@ -33,8 +33,6 @@ import time
 
 from future.builtins import range
 from websocket import _exceptions
-import six
-from six.moves import queue
 
 from pysc2 import run_configs
 

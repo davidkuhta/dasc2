@@ -30,7 +30,7 @@ def __create_unit_dict():
             Dictionary: { unit_id : unit_name } <int> : <string>
     """
 
-    with open(resource_filename(__name__, '../ref/units.json')) as units_data:
+    with open(resource_filename(__name__, '../data/units_simple.json')) as units_data:
         units = json.load(units_data)
         unit_ids = { int(unit_id) : name for unit_id, name in units.items()}
     return unit_ids
@@ -90,8 +90,8 @@ def build_order(states, unit_id_dict):
     labeled_commanding_b_o = __label_units(commanding_b_o, unit_id_dict)
     labeled_opposing_b_o = __label_units(opposing_b_o, unit_id_dict)
 
-    build_data = { "Commanding " : labeled_commanding_b_o.keys(),
-                    "Opposing" : labeled_opposing_b_o.keys() }
+    build_data = { "Commanding " : list(labeled_commanding_b_o.keys()),
+                    "Opposing" : list(labeled_opposing_b_o.keys()) }
 
     return build_data
 

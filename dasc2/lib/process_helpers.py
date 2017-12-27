@@ -17,6 +17,7 @@
 """A module containing helper functions for processing SC2 minimaps"""
 
 import numpy as np
+import json
 
 from collections import defaultdict
 from dasc2.lib.minimap_processor import SC2MinimapProcessor, sf
@@ -34,7 +35,7 @@ def process_minimap(minimap, screen):
         "Opposing" alignments
   """
   mp = SC2MinimapProcessor(minimap, screen)
-  
+
   minimap_data = {  
             "Camera" : minimap[3,:,:].tolist(),
             "PlayerID" : minimap[4,:,:].tolist(),
@@ -54,7 +55,7 @@ def process_minimap(minimap, screen):
               "HPShields" : mp.hp_and_shields(4)
             }
           }
-  
+
   return minimap_data
 
 def army_count(screen, alignment):
@@ -83,3 +84,14 @@ def army_count(screen, alignment):
     army_dict[str(unit[0])] += unit[1]
     
   return army_dict
+
+class NumpyEncoder(json.JSONEncoder):
+  """Modifies JSON encoder to correctly process JSON holding int64"""
+  def default(self, obj):
+      if isinstance(obj, np.integer):
+          return int(obj)
+      elif isinstance(obj, np.floating):
+          return float(obj)
+      elif isinstance(obj, np.ndarray):
+          return obj.tolist()
+      return json.JSONEncoder.default(self, obj)

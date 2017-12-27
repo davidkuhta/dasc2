@@ -46,7 +46,7 @@ from s2clientprotocol import common_pb2 as sc_common
 from s2clientprotocol import sc2api_pb2 as sc_pb
 
 from dasc2.lib.stats import ProcessStats
-from dasc2.lib.process_helpers import army_count, process_minimap
+from dasc2.lib.process_helpers import army_count, process_minimap, NumpyEncoder
 
 import numpy as np
 import json
@@ -287,7 +287,7 @@ class ReplayProcessor(multiprocessing.Process):
                         "PlayerID" : player_id, "Won": won, "Race" : race,
                         "EnemyRace" : enemy_race, "States" : state_list }
         with open(states_file, 'a') as outfile:
-            json.dump(final_state, outfile)
+            json.dump(final_state, outfile, cls=NumpyEncoder)
 
         break
 

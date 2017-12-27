@@ -23,6 +23,9 @@ import subprocess
 import sys
 sys.path.insert(0, '../')
 
+import six
+from six.moves import input
+
 def extract_replays(archives_dir, replays_dir, password, remove=False):
     """Function which extracts replays
         Args:
@@ -67,7 +70,7 @@ def __prompt_for_licensing_agreement(license_agreement):
     valid_option = {"iagreetotheeula": "iagreetotheeula", "no": False, "n": False}
 
     # Create user prompt
-    prompt = " [denoted password or 'No'] \n"
+    prompt = " [denoted password or 'No'] \n\n"
 
     # Intialize counter
     count = 0
@@ -76,10 +79,12 @@ def __prompt_for_licensing_agreement(license_agreement):
     # Output the license_agreement and prompt
         sys.stdout.write(license_agreement + prompt)
     # Assign user input to choice
-        try:
-            choice = raw_input().lower()
-        except NameError:
-            choice = input().lower()
+        #REMOVING
+        # try:
+        #     choice = raw_input().lower()
+        # except NameError:
+        #     choice = input().lower()
+        choice = input().lower()
 
     # If user entires a valid option return it's corresponding value
         if choice in valid_option:
@@ -87,7 +92,7 @@ def __prompt_for_licensing_agreement(license_agreement):
     # Else provide the user with three additional attempts
         elif count < 3:
             count += 1
-            sys.stdout.write("Please respond with the denoted password or 'no'.\n")
+            sys.stdout.write("Please respond with the denoted password or 'no'.\n\n")
         else:
             return False
 

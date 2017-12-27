@@ -84,7 +84,7 @@ def check_build_version(build_version, return_label):
 	    Raises error in the event of an unsupported build type
 	"""
     # Process the build_versions JSON file
-	version_file = open(resource_filename(__name__, '../ref/build_versions.json')).read()
+	version_file = open(resource_filename(__name__, '../data/build_versions.json')).read()
 	versions = json.loads(version_file)
 
 	# Cast build_version to int if it's an int

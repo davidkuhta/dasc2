@@ -31,12 +31,8 @@ import json
 import argparse
 import shutil
 
-# support both python 2 & 3
-try:
-    import urlparse as urlparser
-except ImportError:
-    import urllib.parse as urlparser
-
+import six
+from six.moves.urllib import parse as urlparser
 
 from dasc2.lib.replay_helpers import check_build_version
 

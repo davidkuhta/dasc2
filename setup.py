@@ -32,7 +32,7 @@ extras = {
 
 setup(
     name='daSC2',
-    version='0.2.1-dev3',
+    version='0.2.2-dev3',
     description='Data Analytics Library for StarCraft II',
     long_description=description,
     author='David Kuhta',
@@ -44,7 +44,6 @@ setup(
         'dasc2',
         'dasc2.bin',
         'dasc2.lib',
-        'dasc2.ref',
         'dasc2.agent'
     ],
     install_requires=[
